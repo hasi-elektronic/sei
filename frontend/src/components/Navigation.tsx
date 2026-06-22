@@ -1,7 +1,8 @@
-type Page = 'dashboard' | 'chat' | 'steps' | 'weight' | 'settings'
+type Page = 'dashboard' | 'assistant' | 'chat' | 'steps' | 'weight' | 'settings'
 
 const NAV = [
   { id: 'dashboard', icon: '⏱', label: 'Fasten' },
+  { id: 'assistant', icon: '🧠', label: 'Assistent' },
   { id: 'chat',      icon: '💬', label: 'Essen' },
   { id: 'steps',     icon: '👟', label: 'Schritte' },
   { id: 'weight',    icon: '⚖',  label: 'Gewicht' },
@@ -19,18 +20,18 @@ export default function Navigation({ page, setPage, theme }: {
   const inactiveColor = theme === 'dark' ? '#475569' : '#94A3B8'
 
   return (
-    <nav className="flex justify-center border-b" style={{ background: bg, borderColor: border }}>
+    <nav className="flex justify-center border-b overflow-x-auto" style={{ background: bg, borderColor: border, scrollbarWidth: 'none' }}>
       {NAV.map(n => {
         const active = page === n.id
         return (
           <button key={n.id} onClick={() => setPage(n.id as Page)}
-            className="flex flex-col items-center gap-0.5 py-2 px-4"
+            className="flex flex-col items-center gap-0.5 py-2 px-3 flex-shrink-0"
             style={{
               borderBottom: active ? `2px solid ${activeColor}` : '2px solid transparent',
               color: active ? activeColor : inactiveColor,
             }}>
             <span className="text-base leading-none">{n.icon}</span>
-            <span className="text-xs font-medium" style={{ fontSize: '10px' }}>{n.label}</span>
+            <span style={{ fontSize: '10px', fontWeight: 500 }}>{n.label}</span>
           </button>
         )
       })}

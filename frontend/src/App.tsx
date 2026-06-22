@@ -7,12 +7,13 @@ import Register from './components/Auth/Register'
 import Onboard from './components/Auth/Onboard'
 import Dashboard from './components/Dashboard/Dashboard'
 import FoodChat from './components/Chat/FoodChat'
-import Weight from './components/Weight/Weight'
 import Steps from './components/Steps/Steps'
+import Weight from './components/Weight/Weight'
+import HealthAssistant from './components/Assistant/HealthAssistant'
 import Settings from './components/Settings/Settings'
 import Navigation from './components/Navigation'
 
-type Page = 'dashboard' | 'chat' | 'steps' | 'weight' | 'settings'
+type Page = 'dashboard' | 'assistant' | 'chat' | 'steps' | 'weight' | 'settings'
 type AuthPage = 'landing' | 'login' | 'register'
 
 export default function App() {
@@ -56,11 +57,12 @@ export default function App() {
       <Navigation page={page} setPage={setPage} theme={theme} />
 
       <main className="flex-1 max-w-lg w-full mx-auto px-4 pt-4 pb-6 overflow-y-auto">
-        {page === 'dashboard' && <Dashboard />}
-        {page === 'chat'      && <FoodChat />}
-        {page === 'steps'     && <Steps />}
-        {page === 'weight'    && <Weight />}
-        {page === 'settings'  && <Settings />}
+        {page === 'dashboard'  && <Dashboard />}
+        {page === 'assistant'  && <HealthAssistant />}
+        {page === 'chat'       && <FoodChat />}
+        {page === 'steps'      && <Steps />}
+        {page === 'weight'     && <Weight />}
+        {page === 'settings'   && <Settings />}
       </main>
     </div>
   )
