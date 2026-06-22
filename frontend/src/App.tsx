@@ -8,10 +8,11 @@ import Onboard from './components/Auth/Onboard'
 import Dashboard from './components/Dashboard/Dashboard'
 import FoodChat from './components/Chat/FoodChat'
 import Weight from './components/Weight/Weight'
+import Steps from './components/Steps/Steps'
 import Settings from './components/Settings/Settings'
 import Navigation from './components/Navigation'
 
-type Page = 'dashboard' | 'chat' | 'weight' | 'settings'
+type Page = 'dashboard' | 'chat' | 'steps' | 'weight' | 'settings'
 type AuthPage = 'landing' | 'login' | 'register'
 
 export default function App() {
@@ -57,6 +58,7 @@ export default function App() {
       <main className="flex-1 max-w-lg w-full mx-auto px-4 pt-4 pb-6 overflow-y-auto">
         {page === 'dashboard' && <Dashboard />}
         {page === 'chat'      && <FoodChat />}
+        {page === 'steps'     && <Steps />}
         {page === 'weight'    && <Weight />}
         {page === 'settings'  && <Settings />}
       </main>

@@ -1,8 +1,9 @@
-type Page = 'dashboard' | 'chat' | 'weight' | 'settings'
+type Page = 'dashboard' | 'chat' | 'steps' | 'weight' | 'settings'
 
 const NAV = [
   { id: 'dashboard', icon: '⏱', label: 'Fasten' },
   { id: 'chat',      icon: '💬', label: 'Essen' },
+  { id: 'steps',     icon: '👟', label: 'Schritte' },
   { id: 'weight',    icon: '⚖',  label: 'Gewicht' },
   { id: 'settings',  icon: '⚙',  label: 'Profil' },
 ]
@@ -23,13 +24,13 @@ export default function Navigation({ page, setPage, theme }: {
         const active = page === n.id
         return (
           <button key={n.id} onClick={() => setPage(n.id as Page)}
-            className="flex flex-col items-center gap-0.5 py-2 px-6"
+            className="flex flex-col items-center gap-0.5 py-2 px-4"
             style={{
               borderBottom: active ? `2px solid ${activeColor}` : '2px solid transparent',
               color: active ? activeColor : inactiveColor,
             }}>
-            <span className="text-lg leading-none">{n.icon}</span>
-            <span className="text-xs font-medium">{n.label}</span>
+            <span className="text-base leading-none">{n.icon}</span>
+            <span className="text-xs font-medium" style={{ fontSize: '10px' }}>{n.label}</span>
           </button>
         )
       })}
