@@ -12,22 +12,26 @@ const NAV = [
 export default function Navigation({ page, setPage }: { page: Page; setPage: (p: Page) => void }) {
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 flex justify-around items-center py-2 border-t"
+      className="flex justify-center border-b"
       style={{ background: C.bgSecondary, borderColor: C.borderLight }}
     >
-      {NAV.map(n => (
-        <button
-          key={n.id}
-          onClick={() => setPage(n.id as Page)}
-          className="flex flex-col items-center gap-0.5 py-1 px-4 rounded-xl"
-          style={{ opacity: page === n.id ? 1 : 0.4 }}
-        >
-          <span className="text-xl leading-none">{n.icon}</span>
-          <span className="text-xs" style={{ color: page === n.id ? C.textPrimary : C.textTertiary }}>
-            {n.label}
-          </span>
-        </button>
-      ))}
+      {NAV.map(n => {
+        const active = page === n.id
+        return (
+          <button
+            key={n.id}
+            onClick={() => setPage(n.id as Page)}
+            className="flex flex-col items-center gap-0.5 py-2 px-5"
+            style={{
+              borderBottom: active ? `2px solid ${C.info}` : '2px solid transparent',
+              color: active ? C.info : C.textTertiary,
+            }}
+          >
+            <span className="text-lg leading-none">{n.icon}</span>
+            <span className="text-xs font-medium">{n.label}</span>
+          </button>
+        )
+      })}
     </nav>
   )
 }

@@ -34,8 +34,13 @@ export default function App() {
   }
 
   return (
-    <div style={{ background: C.bgPrimary, minHeight: '100vh', color: C.textPrimary }}>
-      <header className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b" style={{ background: C.bgPrimary, borderColor: C.borderLight }}>
+    <div style={{ background: C.bgPrimary, minHeight: '100vh', color: C.textPrimary, display: 'flex', flexDirection: 'column' }}>
+
+      {/* Header */}
+      <header
+        className="flex items-center justify-between px-4 py-3 border-b"
+        style={{ background: C.bgPrimary, borderColor: C.borderLight }}
+      >
         <div className="flex items-center gap-2">
           <span className="text-xl" style={{ fontFamily: '"IBM Plex Serif", serif' }}>清</span>
           <span className="text-xl font-semibold" style={{ fontFamily: '"IBM Plex Serif", serif' }}>SEI</span>
@@ -45,14 +50,17 @@ export default function App() {
         </span>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 pt-4 pb-24">
+      {/* TOP Navigation */}
+      <Navigation page={page} setPage={setPage} />
+
+      {/* Content */}
+      <main className="flex-1 max-w-lg w-full mx-auto px-4 pt-4 pb-6 overflow-y-auto">
         {page === 'dashboard' && <Dashboard />}
         {page === 'chat'      && <FoodChat />}
         {page === 'weight'    && <Weight />}
         {page === 'settings'  && <Settings />}
       </main>
 
-      <Navigation page={page} setPage={setPage} />
     </div>
   )
 }
