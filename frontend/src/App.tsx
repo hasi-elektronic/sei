@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuthStore } from './store/authStore'
 import { C } from './theme/colors'
+import Landing from './components/Landing'
 import Login from './components/Auth/Login'
 import Register from './components/Auth/Register'
 import Onboard from './components/Auth/Onboard'
@@ -11,19 +12,29 @@ import Settings from './components/Settings/Settings'
 import Navigation from './components/Navigation'
 
 type Page = 'dashboard' | 'meals' | 'weight' | 'settings'
-type AuthPage = 'login' | 'register' | 'onboard'
+type AuthPage = 'landing' | 'login' | 'register' | 'onboard'
 
 export default function App() {
   const [page, setPage] = useState<Page>('dashboard')
-  const [authPage, setAuthPage] = useState<AuthPage>('login')
+  const [authPage, setAuthPage] = useState<AuthPage>('landing')
   const { token, onboardDone } = useAuthStore()
 
-  // Not logged in
+  // Not logged in → show landing / auth pages
   if (!token) {
     return (
       <div style={{ background: C.bgPrimary, minHeight: '100vh' }}>
-        {authPage === 'login' && <Login onSwitch={() => setAuthPage('register')} />}
-        {authPage === 'register' && <Register onSwitch={() => setAuthPage('login')} />}
+        {authPage === 'landing' && (
+          <Landing
+            onLogin={() => setAuthPage('login')}
+            onRegister={() => setAuthPage('register')}
+          />
+        )}
+        {authPage === 'login' && (
+          <Login onSwitch={() => setAuthPage('register')} />
+        )}
+        {authPage === 'register' && (
+          <Register onSwitch={() => setAuthPage('login')} />
+        )}
       </div>
     )
   }
@@ -40,7 +51,6 @@ export default function App() {
   // Main App
   return (
     <div style={{ background: C.bgPrimary, minHeight: '100vh', color: C.textPrimary }}>
-      {/* Header */}
       <header
         className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b"
         style={{ background: C.bgPrimary, borderColor: C.borderLight }}
@@ -54,7 +64,6 @@ export default function App() {
         </span>
       </header>
 
-      {/* Page Content */}
       <main className="max-w-lg mx-auto px-4 pt-4 pb-24">
         {page === 'dashboard' && <Dashboard />}
         {page === 'meals'     && <AddMeal />}
