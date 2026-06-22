@@ -1,11 +1,9 @@
 name = "sei-api"
 main = "src/index.ts"
 compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
 
 [[d1_databases]]
 binding = "DB"
 database_name = "sei-db"
-database_id = "PLACEHOLDER"
-
-[vars]
-ENVIRONMENT = "production"
+database_id = "972352fb-00d5-4d41-a147-393e903d86c8"
