@@ -13,109 +13,82 @@ interface Message {
   added?: boolean
 }
 
-const DEFAULT_GRAMS: Record<string, number> = {
-  'Ei': 60, 'Rührei': 120, 'Scrambled Eggs': 120,
-  'Ayran': 250, 'Kaffee': 200, 'Çay': 200, 'Bier': 330,
-  'Protein Shake': 300, 'Protein Bar': 60,
-  'Baklava': 50, 'Lokum': 10, 'Simit': 120,
-  'Berliner': 80, 'Croissant': 70,
-}
-
-// Local fuzzy search — kein API Key nötig
-function searchLocal(input: string): { food: typeof FOOD_DB[0]; grams: number } | null {
+// Local search — returns best match with grams
+function searchLocal(input: string): { name: string; grams: number; calories: number; protein: number; origin: string } | null {
   const text = input.toLowerCase().trim()
 
-  // Extract grams if mentioned: "300g", "300 g", "300 gram"
-  const gramMatch = text.match(/(\d+)\s*(?:g|gr|gram|gramm)/i)
-  let grams = gramMatch ? parseInt(gramMatch[1]) : 0
+  // Extract explicit grams: "300g", "300 g", "300gr"
+  const gramMatch = text.match(/(\d+)\s*(?:g|gr|gram|gramm)\b/i)
+  let explicitGrams = gramMatch ? parseInt(gramMatch[1]) : 0
 
-  // Keywords to search
-  const keywords = text
-    .replace(/\d+\s*(?:g|gr|gram|gramm)/gi, '')
-    .replace(/\b(mit|und|and|ile|yedim|gegessen|ate|had|essen|ich|ein|eine|zwei|drei|tane|adet|piece|pieces)\b/gi, '')
+  // Extract multiplier: "2 Eier", "3 tane"
+  const multiMatch = text.match(/^(\d+)\s+/)
+  const multi = multiMatch ? parseInt(multiMatch[1]) : 1
+
+  // Clean search term
+  const clean = text
+    .replace(/\d+\s*(?:g|gr|gram|gramm)\b/gi, '')
+    .replace(/^(\d+)\s+/, '')
+    .replace(/\b(mit|und|and|ile|yedim|gegessen|ate|had|tane|adet|piece|pieces|porsiyon|portion)\b/gi, '')
     .trim()
 
-  if (!keywords) return null
+  if (clean.length < 2) return null
 
-  // Scoring: exact > starts with > contains
-  let best: typeof FOOD_DB[0] | null = null
+  // Score each food
+  let best = null
   let bestScore = 0
 
   for (const food of FOOD_DB) {
     const fname = food.name.toLowerCase()
     let score = 0
 
-    if (fname === keywords) score = 100
-    else if (fname.startsWith(keywords)) score = 80
-    else if (fname.includes(keywords)) score = 60
+    if (fname === clean) score = 100
+    else if (fname.startsWith(clean)) score = 80
+    else if (fname.includes(clean)) score = 60
     else {
-      // partial word match
-      const words = keywords.split(/\s+/)
-      const matchedWords = words.filter(w => w.length > 2 && fname.includes(w))
-      if (matchedWords.length > 0) score = matchedWords.length * 20
+      const words = clean.split(/\s+/).filter(w => w.length > 2)
+      const matched = words.filter(w => fname.includes(w))
+      if (matched.length > 0) score = matched.length * 25
     }
 
-    if (score > bestScore) {
-      bestScore = score
-      best = food
-    }
+    if (score > bestScore) { bestScore = score; best = food }
   }
 
   if (!best || bestScore < 20) return null
 
-  // Default grams
-  if (!grams) {
-    for (const [key, val] of Object.entries(DEFAULT_GRAMS)) {
-      if (best.name.toLowerCase().includes(key.toLowerCase())) {
-        grams = val
-        break
-      }
-    }
-    if (!grams) grams = 100
+  // Determine grams: explicit > multiplier × portion > portion
+  let grams: number
+  if (explicitGrams > 0) {
+    grams = explicitGrams
+  } else if (multi > 1) {
+    grams = best.portion * multi
+  } else {
+    grams = best.portion  // default = typical portion!
   }
 
-  return { food: best, grams }
+  return {
+    name: best.name,
+    grams,
+    calories: calcCalories(best.kcal, grams),
+    protein: calcProtein(best.protein, grams),
+    origin: best.origin,
+  }
 }
 
-// Parse "2 Eier" → multiplier
-function parseMultiplier(text: string): number {
-  const m = text.match(/^(\d+)\s+/)
-  return m ? parseInt(m[1]) : 1
-}
-
-// Parse multiple foods from input
 function parseInput(input: string): FoodItem[] {
   const results: FoodItem[] = []
-  
-  // Split by common connectors
   const parts = input.split(/\s*[+,&\/]\s*|\s+und\s+|\s+ile\s+|\s+and\s+/i)
 
   for (const part of parts) {
-    const trimmed = part.trim()
-    if (!trimmed) continue
-
-    const multi = parseMultiplier(trimmed)
-    const result = searchLocal(trimmed)
-
-    if (result) {
-      const { food, grams } = result
-      const totalGrams = grams * (multi > 1 ? multi : 1)
-      results.push({
-        name: food.name,
-        grams: totalGrams,
-        calories: calcCalories(food.kcal, totalGrams),
-        protein: calcProtein(food.protein, totalGrams),
-        origin: food.origin,
-      })
-    }
+    const r = searchLocal(part.trim())
+    if (r) results.push(r)
   }
-
   return results
 }
 
 const SUGGESTIONS = [
-  '300g Huhn Brust', '2 Eier', 'Pirinç Pilavı 200g',
-  'Lachs 200g', 'Köfte 150g', 'Ayran',
+  '300g Huhn Brust', '2 Eier', 'Pirinç Pilavı',
+  'Lachs', 'Köfte', 'Mercimek Çorbası',
 ]
 
 const today = () => new Date().toISOString().split('T')[0]
@@ -139,35 +112,27 @@ export default function FoodChat() {
     setInput('')
     setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'user', text: userText }])
     setLoading(true)
-
-    // Small delay for UX feel
-    await new Promise(r => setTimeout(r, 400))
+    await new Promise(r => setTimeout(r, 300))
 
     const items = parseInput(userText)
 
     if (items.length > 0) {
       const totalKcal = items.reduce((s, i) => s + i.calories, 0)
       const totalProt = items.reduce((s, i) => s + i.protein, 0)
+
       const reply = items.length === 1
         ? `${items[0].name} (${items[0].grams}g) — ${items[0].calories} kcal, ${items[0].protein}g Protein.`
-        : `${items.length} Mahlzeiten erkannt — gesamt ${totalKcal} kcal, ${totalProt}g Protein.`
+        : `${items.length} Mahlzeiten — ${totalKcal} kcal, ${totalProt}g Protein gesamt.`
 
       setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'bot', text: reply, items }])
     } else {
-      // Suggest closest matches
-      const searchText = userText.toLowerCase()
-      const suggestions = FOOD_DB
-        .filter(f => f.name.toLowerCase().includes(searchText.slice(0, 4)))
-        .slice(0, 3)
-        .map(f => f.name)
-
-      const hint = suggestions.length > 0
-        ? `Meintest du: ${suggestions.join(', ')}?`
-        : 'Nicht erkannt. Versuche z.B. "300g Huhn", "Pirinç 200g", "2 Eier".'
-
+      const s = userText.toLowerCase().slice(0, 5)
+      const hints = FOOD_DB.filter(f => f.name.toLowerCase().includes(s)).slice(0, 3).map(f => f.name)
+      const hint = hints.length > 0
+        ? `Meintest du: ${hints.join(', ')}?`
+        : 'Nicht erkannt. z.B. "Huhn 300g", "2 Eier", "Pirinç Pilavı".'
       setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'bot', text: hint }])
     }
-
     setLoading(false)
   }
 
@@ -200,25 +165,20 @@ export default function FoodChat() {
       <div className="flex-1 overflow-y-auto space-y-3 pb-2">
         {messages.map(msg => (
           <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div
-              className="max-w-xs px-4 py-3"
-              style={{
-                background: msg.role === 'user' ? C.info : C.bgSecondary,
-                color: C.textPrimary,
-                borderRadius: msg.role === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                maxWidth: '85%',
-              }}
-            >
+            <div className="px-4 py-3" style={{
+              background: msg.role === 'user' ? C.info : C.bgSecondary,
+              color: C.textPrimary,
+              borderRadius: msg.role === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+              maxWidth: '88%',
+            }}>
               <p className="text-sm leading-relaxed">{msg.text}</p>
 
-              {msg.items && msg.items.length > 0 && (
+              {msg.items?.length && (
                 <div className="mt-2 space-y-1">
                   {msg.items.map((item, i) => (
                     <div key={i} className="flex justify-between text-xs px-2 py-1.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.08)' }}>
                       <span>{ORIGIN_FLAGS[item.origin || 'INT']} {item.name} ({item.grams}g)</span>
-                      <span className="font-mono ml-2" style={{ color: C.success }}>
-                        {item.calories} · {item.protein}g P
-                      </span>
+                      <span className="font-mono ml-2" style={{ color: C.success }}>{item.calories} kcal · {item.protein}g P</span>
                     </div>
                   ))}
                   {!msg.added ? (
@@ -237,7 +197,7 @@ export default function FoodChat() {
         {loading && (
           <div className="flex justify-start">
             <div className="px-4 py-3 text-sm" style={{ background: C.bgSecondary, color: C.textTertiary, borderRadius: '18px 18px 18px 4px' }}>
-              <span className="animate-pulse">...</span>
+              <span className="animate-pulse">···</span>
             </div>
           </div>
         )}
@@ -264,17 +224,14 @@ export default function FoodChat() {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && send(input)}
-          placeholder="z.B. 300g Huhn, Pirinç, 2 Eier..."
+          placeholder="z.B. Pirinç, 300g Huhn, 2 Eier + Lachs..."
           className="flex-1 bg-transparent text-sm outline-none"
           style={{ color: C.textPrimary, padding: '6px 4px', border: 'none' }}
           disabled={loading}
         />
-        <button
-          onClick={() => send(input)}
-          disabled={loading || !input.trim()}
+        <button onClick={() => send(input)} disabled={loading || !input.trim()}
           className="px-4 py-2 rounded-xl text-sm font-semibold text-white"
-          style={{ background: input.trim() && !loading ? C.info : C.bgTertiary }}
-        >
+          style={{ background: input.trim() && !loading ? C.info : C.bgTertiary }}>
           →
         </button>
       </div>

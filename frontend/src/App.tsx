@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuthStore } from './store/authStore'
-import { C } from './theme/colors'
+import { useAppStore } from './store/appStore'
 import Landing from './components/Landing'
 import Login from './components/Auth/Login'
 import Register from './components/Auth/Register'
@@ -18,10 +18,16 @@ export default function App() {
   const [page, setPage] = useState<Page>('dashboard')
   const [authPage, setAuthPage] = useState<AuthPage>('landing')
   const { token, onboardDone } = useAuthStore()
+  const { theme } = useAppStore()
+
+  const bg = theme === 'dark' ? '#0F172A' : '#F8FAFC'
+  const text = theme === 'dark' ? '#F1F5F9' : '#0F172A'
+  const headerBorder = theme === 'dark' ? '#334155' : '#E2E8F0'
+  const headerBg = theme === 'dark' ? '#0F172A' : '#FFFFFF'
 
   if (!token) {
     return (
-      <div style={{ background: C.bgPrimary, minHeight: '100vh' }}>
+      <div style={{ background: bg, minHeight: '100vh', color: text }}>
         {authPage === 'landing' && <Landing onLogin={() => setAuthPage('login')} onRegister={() => setAuthPage('register')} />}
         {authPage === 'login' && <Login onSwitch={() => setAuthPage('register')} />}
         {authPage === 'register' && <Register onSwitch={() => setAuthPage('login')} />}
@@ -30,37 +36,30 @@ export default function App() {
   }
 
   if (!onboardDone) {
-    return <div style={{ background: C.bgPrimary, minHeight: '100vh' }}><Onboard onComplete={() => {}} /></div>
+    return <div style={{ background: bg, minHeight: '100vh', color: text }}><Onboard onComplete={() => {}} /></div>
   }
 
   return (
-    <div style={{ background: C.bgPrimary, minHeight: '100vh', color: C.textPrimary, display: 'flex', flexDirection: 'column' }}>
-
-      {/* Header */}
-      <header
-        className="flex items-center justify-between px-4 py-3 border-b"
-        style={{ background: C.bgPrimary, borderColor: C.borderLight }}
-      >
+    <div style={{ background: bg, minHeight: '100vh', color: text, display: 'flex', flexDirection: 'column' }}>
+      <header className="flex items-center justify-between px-4 py-3 border-b"
+        style={{ background: headerBg, borderColor: headerBorder }}>
         <div className="flex items-center gap-2">
           <span className="text-xl" style={{ fontFamily: '"IBM Plex Serif", serif' }}>清</span>
           <span className="text-xl font-semibold" style={{ fontFamily: '"IBM Plex Serif", serif' }}>SEI</span>
         </div>
-        <span className="text-xs" style={{ color: C.textTertiary }}>
+        <span className="text-xs" style={{ color: theme === 'dark' ? '#94A3B8' : '#64748B' }}>
           {new Date().toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' })}
         </span>
       </header>
 
-      {/* TOP Navigation */}
-      <Navigation page={page} setPage={setPage} />
+      <Navigation page={page} setPage={setPage} theme={theme} />
 
-      {/* Content */}
       <main className="flex-1 max-w-lg w-full mx-auto px-4 pt-4 pb-6 overflow-y-auto">
         {page === 'dashboard' && <Dashboard />}
         {page === 'chat'      && <FoodChat />}
         {page === 'weight'    && <Weight />}
         {page === 'settings'  && <Settings />}
       </main>
-
     </div>
   )
 }
