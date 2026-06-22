@@ -5,7 +5,7 @@ import { calcCalories, calcProtein } from '../../utils/calculations'
 import { FOOD_DB, CATEGORIES, ORIGIN_FLAGS, type Food } from '../../data/foodDatabase'
 
 const today = () => new Date().toISOString().split('T')[0]
-const now = () => new Date().toTimeString().slice(0, 5)
+const nowTime = () => new Date().toTimeString().slice(0, 5)
 
 export default function AddMeal() {
   const { meals, addMeal, removeMeal, todayCalories, todayProtein } = useAppStore()
@@ -19,18 +19,22 @@ export default function AddMeal() {
 
   const filtered = FOOD_DB.filter(f =>
     (cat === 'Alle' || f.cat === cat) &&
-    (f.name.toLowerCase().includes(search.toLowerCase()))
+    f.name.toLowerCase().includes(search.toLowerCase())
   )
 
   const preview = selected
     ? { kcal: calcCalories(selected.kcal, grams), protein: calcProtein(selected.protein, grams) }
     : null
 
+  const handleSelect = (f: Food) => {
+    setSelected(f)
+    setGrams(f.portion) // prefill with typical portion
+  }
+
   const handleAdd = () => {
     if (!selected || !preview) return
-    addMeal({ date: today(), time: now(), food_name: selected.name, grams, calories: preview.kcal, protein: preview.protein })
+    addMeal({ date: today(), time: nowTime(), food_name: selected.name, grams, calories: preview.kcal, protein: preview.protein })
     setSelected(null)
-    setGrams(100)
     setSearch('')
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
@@ -38,7 +42,7 @@ export default function AddMeal() {
 
   return (
     <div className="space-y-3">
-      {/* Today totals */}
+      {/* Totals */}
       <div className="flex justify-around py-3 rounded-2xl border" style={{ background: C.bgSecondary, borderColor: C.borderLight }}>
         <div className="text-center">
           <div className="font-mono font-bold text-xl" style={{ color: C.success }}>{todayCalories()}</div>
@@ -56,28 +60,25 @@ export default function AddMeal() {
         </div>
       </div>
 
-      {/* Search */}
+      {/* Search + Add */}
       <div className="rounded-2xl p-4 border space-y-3" style={{ background: C.bgSecondary, borderColor: C.borderLight }}>
         <input
           type="text"
           value={search}
           onChange={e => { setSearch(e.target.value); setSelected(null) }}
-          placeholder="🔍 Suche: Huhn, Pirinç, Salmon..."
+          placeholder="🔍  Huhn, Pirinç, Lachs, Salat..."
         />
 
         {/* Category pills */}
         <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
           {CATEGORIES.map(c => (
-            <button
-              key={c}
-              onClick={() => { setCat(c); setSelected(null) }}
+            <button key={c} onClick={() => { setCat(c); setSelected(null) }}
               className="px-3 py-1 rounded-full text-xs whitespace-nowrap border flex-shrink-0"
               style={{
                 background: cat === c ? C.info : 'transparent',
                 borderColor: cat === c ? C.info : C.borderMedium,
                 color: cat === c ? '#fff' : C.textSecondary,
-              }}
-            >
+              }}>
               {c}
             </button>
           ))}
@@ -85,26 +86,28 @@ export default function AddMeal() {
 
         {/* Food list */}
         {!selected && (
-          <div className="space-y-1 max-h-52 overflow-y-auto">
+          <div className="space-y-1 max-h-56 overflow-y-auto">
             {filtered.length === 0 && (
-              <p className="text-sm text-center py-4" style={{ color: C.textTertiary }}>
-                Kein Ergebnis für "{search}"
-              </p>
+              <p className="text-sm text-center py-4" style={{ color: C.textTertiary }}>Kein Ergebnis für "{search}"</p>
             )}
             {filtered.slice(0, 20).map(f => (
-              <button
-                key={f.name}
-                onClick={() => { setSelected(f); setGrams(100) }}
-                className="w-full text-left px-3 py-2 rounded-xl flex justify-between items-center"
-                style={{ background: C.bgTertiary }}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-xs">{ORIGIN_FLAGS[f.origin]}</span>
-                  <span className="text-sm">{f.name}</span>
+              <button key={f.name} onClick={() => handleSelect(f)}
+                className="w-full text-left px-3 py-2.5 rounded-xl"
+                style={{ background: C.bgTertiary }}>
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <span className="text-xs flex-shrink-0">{ORIGIN_FLAGS[f.origin]}</span>
+                    <span className="text-sm truncate">{f.name}</span>
+                  </div>
+                  <div className="text-right flex-shrink-0 ml-2">
+                    <div className="text-xs font-mono" style={{ color: C.textPrimary }}>
+                      {f.kcal} kcal · {f.protein}g P
+                    </div>
+                    <div className="text-xs" style={{ color: C.textTertiary }}>
+                      pro 100g · {f.portionLabel} = {f.portion}g
+                    </div>
+                  </div>
                 </div>
-                <span className="text-xs flex-shrink-0 ml-2" style={{ color: C.textTertiary }}>
-                  {f.kcal} kcal · {f.protein}g P
-                </span>
               </button>
             ))}
             {filtered.length > 20 && (
@@ -115,47 +118,66 @@ export default function AddMeal() {
           </div>
         )}
 
-        {/* Selected food */}
+        {/* Selected food detail */}
         {selected && (
           <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <span>{ORIGIN_FLAGS[selected.origin]}</span>
-                <span className="font-medium text-sm">{selected.name}</span>
+            <div className="flex justify-between items-start">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span>{ORIGIN_FLAGS[selected.origin]}</span>
+                  <span className="font-medium text-sm">{selected.name}</span>
+                </div>
+                <div className="text-xs mt-0.5" style={{ color: C.textTertiary }}>
+                  Typische Portion: {selected.portionLabel} ({selected.portion}g)
+                </div>
               </div>
               <button onClick={() => setSelected(null)} className="text-xs" style={{ color: C.textTertiary }}>✕ ändern</button>
             </div>
 
+            {/* Quick portion buttons */}
+            <div className="flex gap-2">
+              <button onClick={() => setGrams(selected.portion)}
+                className="flex-1 py-1.5 rounded-lg text-xs border font-medium"
+                style={{
+                  borderColor: grams === selected.portion ? C.success : C.borderMedium,
+                  color: grams === selected.portion ? C.success : C.textSecondary,
+                  background: grams === selected.portion ? 'rgba(16,185,129,0.1)' : 'transparent',
+                }}>
+                {selected.portionLabel} ({selected.portion}g)
+              </button>
+              {[100, 150, 200, 250, 300].filter(g => g !== selected.portion).slice(0, 3).map(g => (
+                <button key={g} onClick={() => setGrams(g)}
+                  className="px-3 py-1.5 rounded-lg text-xs border"
+                  style={{
+                    borderColor: grams === g ? C.info : C.borderMedium,
+                    color: grams === g ? C.info : C.textSecondary,
+                    background: grams === g ? 'rgba(59,130,246,0.1)' : 'transparent',
+                  }}>
+                  {g}g
+                </button>
+              ))}
+            </div>
+
             <div>
-              <label className="text-xs block mb-1" style={{ color: C.textSecondary }}>Gramm</label>
-              <input
-                type="number"
-                value={grams}
-                onChange={e => setGrams(Math.max(1, +e.target.value))}
-                min={1}
-                max={2000}
-                className="text-center text-2xl font-mono"
-              />
+              <label className="text-xs block mb-1" style={{ color: C.textSecondary }}>Gramm (manuell)</label>
+              <input type="number" value={grams} onChange={e => setGrams(Math.max(1, +e.target.value))} min={1} max={2000} className="text-center text-2xl font-mono" />
             </div>
 
             {preview && (
               <div className="flex justify-around py-3 rounded-xl" style={{ background: C.bgTertiary }}>
                 <div className="text-center">
-                  <div className="font-mono font-bold" style={{ color: C.success }}>{preview.kcal}</div>
+                  <div className="font-mono font-bold text-lg" style={{ color: C.success }}>{preview.kcal}</div>
                   <div className="text-xs" style={{ color: C.textTertiary }}>kcal</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-mono font-bold" style={{ color: C.info }}>{preview.protein}</div>
+                  <div className="font-mono font-bold text-lg" style={{ color: C.info }}>{preview.protein}</div>
                   <div className="text-xs" style={{ color: C.textTertiary }}>g Protein</div>
                 </div>
               </div>
             )}
 
-            <button
-              onClick={handleAdd}
-              className="w-full py-3 rounded-xl font-semibold text-white"
-              style={{ background: added ? C.success : C.info }}
-            >
+            <button onClick={handleAdd} className="w-full py-3 rounded-xl font-semibold text-white"
+              style={{ background: added ? C.success : C.info }}>
               {added ? '✓ Hinzugefügt!' : '+ Hinzufügen'}
             </button>
           </div>
@@ -177,7 +199,7 @@ export default function AddMeal() {
                   <div className="font-mono text-sm">{m.calories} kcal</div>
                   <div className="text-xs" style={{ color: C.textTertiary }}>{m.protein}g P</div>
                 </div>
-                <button onClick={() => removeMeal(m.id)} style={{ color: C.textTertiary }} className="text-xl leading-none">×</button>
+                <button onClick={() => removeMeal(m.id)} style={{ color: C.textTertiary }} className="text-xl">×</button>
               </div>
             </div>
           ))}
