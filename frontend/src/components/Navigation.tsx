@@ -1,10 +1,10 @@
 import { C } from '../theme/colors'
 
-type Page = 'dashboard' | 'meals' | 'weight' | 'settings'
+type Page = 'dashboard' | 'chat' | 'weight' | 'settings'
 
 const NAV = [
   { id: 'dashboard', icon: '⏱', label: 'Fasten' },
-  { id: 'meals',     icon: '🍽', label: 'Essen' },
+  { id: 'chat',      icon: '💬', label: 'Essen' },
   { id: 'weight',    icon: '⚖',  label: 'Gewicht' },
   { id: 'settings',  icon: '⚙',  label: 'Profil' },
 ]
@@ -19,7 +19,7 @@ export default function Navigation({ page, setPage }: { page: Page; setPage: (p:
         <button
           key={n.id}
           onClick={() => setPage(n.id as Page)}
-          className="flex flex-col items-center gap-0.5 py-1 px-4 rounded-xl transition-all"
+          className="flex flex-col items-center gap-0.5 py-1 px-4 rounded-xl"
           style={{ opacity: page === n.id ? 1 : 0.4 }}
         >
           <span className="text-xl leading-none">{n.icon}</span>
