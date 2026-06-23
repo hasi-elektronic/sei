@@ -10,10 +10,11 @@ import FoodChat from './components/Chat/FoodChat'
 import Steps from './components/Steps/Steps'
 import Weight from './components/Weight/Weight'
 import HealthAssistant from './components/Assistant/HealthAssistant'
+import History from './components/History/History'
 import Settings from './components/Settings/Settings'
 import Navigation from './components/Navigation'
 
-type Page = 'dashboard' | 'assistant' | 'chat' | 'steps' | 'weight' | 'settings'
+type Page = 'dashboard' | 'assistant' | 'chat' | 'steps' | 'weight' | 'history' | 'settings'
 type AuthPage = 'landing' | 'login' | 'register'
 
 export default function App() {
@@ -57,12 +58,13 @@ export default function App() {
       <Navigation page={page} setPage={setPage} theme={theme} />
 
       <main className="flex-1 max-w-lg w-full mx-auto px-4 pt-4 pb-6 overflow-y-auto">
-        {page === 'dashboard'  && <Dashboard />}
-        {page === 'assistant'  && <HealthAssistant />}
-        {page === 'chat'       && <FoodChat />}
-        {page === 'steps'      && <Steps />}
-        {page === 'weight'     && <Weight />}
-        {page === 'settings'   && <Settings />}
+        {page === 'dashboard' && <Dashboard />}
+        {page === 'assistant' && <HealthAssistant />}
+        {page === 'chat'      && <FoodChat />}
+        {page === 'steps'     && <Steps />}
+        {page === 'weight'    && <Weight />}
+        {page === 'history'   && <History />}
+        {page === 'settings'  && <Settings />}
       </main>
     </div>
   )

@@ -1,11 +1,12 @@
-type Page = 'dashboard' | 'assistant' | 'chat' | 'steps' | 'weight' | 'settings'
+type Page = 'dashboard' | 'assistant' | 'chat' | 'steps' | 'weight' | 'history' | 'settings'
 
 const NAV = [
   { id: 'dashboard', icon: '⏱', label: 'Fasten' },
-  { id: 'assistant', icon: '🧠', label: 'Assistent' },
+  { id: 'assistant', icon: '🧠', label: 'Score' },
   { id: 'chat',      icon: '💬', label: 'Essen' },
   { id: 'steps',     icon: '👟', label: 'Schritte' },
   { id: 'weight',    icon: '⚖',  label: 'Gewicht' },
+  { id: 'history',   icon: '📅', label: 'Verlauf' },
   { id: 'settings',  icon: '⚙',  label: 'Profil' },
 ]
 
@@ -20,7 +21,7 @@ export default function Navigation({ page, setPage, theme }: {
   const inactiveColor = theme === 'dark' ? '#475569' : '#94A3B8'
 
   return (
-    <nav className="flex justify-center border-b overflow-x-auto" style={{ background: bg, borderColor: border, scrollbarWidth: 'none' }}>
+    <nav className="flex border-b overflow-x-auto" style={{ background: bg, borderColor: border, scrollbarWidth: 'none' }}>
       {NAV.map(n => {
         const active = page === n.id
         return (
